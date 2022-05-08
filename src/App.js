@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "./styles/App.css";
 import twitterLogo from "./assets/twitter-logo.svg";
 
@@ -7,33 +7,69 @@ const TWITTER_HANDLE = "_buildspace";
 const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
 
 const App = () => {
-  // Gotta make sure this is async.
-  const checkIfWalletIsConnected = () => {
-    // First make sure we have access to window.ethereum
+  const [currentAccount, setCurrentAccount] = useState("");
+
+  // Implement your connectWallet method here
+  const connectWallet = async () => {
+    try {
+      const { ethereum } = window;
+
+      if (!ethereum) {
+        alert("Get MetaMask -> https://metamask.io/");
+        return;
+      }
+
+      // Fancy method to request access to account.
+      const accounts = await ethereum.request({
+        method: "eth_requestAccounts",
+      });
+
+      // Boom! This should print out public address once we authorize Metamask.
+      console.log("Connected", accounts[0]);
+      setCurrentAccount(accounts[0]);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const checkIfWalletIsConnected = async () => {
     const { ethereum } = window;
 
     if (!ethereum) {
-      console.log("Make sure you have MetaMask!");
+      console.log("Make sure you have metamask!");
       return;
     } else {
       console.log("We have the ethereum object", ethereum);
     }
+
+    const accounts = await ethereum.request({ method: "eth_accounts" });
+
+    if (accounts.length !== 0) {
+      const account = accounts[0];
+      console.log("Found an authorized account:", account);
+      setCurrentAccount(account);
+    } else {
+      console.log("No authorized account found");
+    }
   };
 
-  // Create a function to render if wallet is not connected yet
+  // Render Methods
   const renderNotConnectedContainer = () => (
     <div className="connect-wallet-container">
       <img
-        src="https://media.giphy.com/media/3o6ZtgnmZDZeAshxYY/giphy.gif"
-        alt="Party lemon"
+        src="https://media.giphy.com/media/3ohhwytHcusSCXXOUg/giphy.gif"
+        alt="Ninja donut gif"
       />
-      <button className="cta-button connect-wallet-button">
+      {/* Call the connectWallet function we just wrote when the button is clicked */}
+      <button
+        onClick={connectWallet}
+        className="cta-button connect-wallet-button"
+      >
         Connect Wallet
       </button>
     </div>
   );
 
-  // This runs our function when the page loads.
   useEffect(() => {
     checkIfWalletIsConnected();
   }, []);
@@ -46,14 +82,14 @@ const App = () => {
             <div className="left">
               <p className="title">🍋 Lemon Name Service</p>
               <p className="subtitle">
-                Your immortal lemon API on the blockchain!
+                Your immortal lemons API on the blockchain!
               </p>
             </div>
           </header>
         </div>
 
-        {/* Add your render method here */}
-        {renderNotConnectedContainer()}
+        {/* Hide the connect button if currentAccount isn't empty*/}
+        {!currentAccount && renderNotConnectedContainer()}
 
         <div className="footer-container">
           <img alt="Twitter Logo" className="twitter-logo" src={twitterLogo} />
@@ -62,9 +98,7 @@ const App = () => {
             href={TWITTER_LINK}
             target="_blank"
             rel="noreferrer"
-          >
-            {`built with @${TWITTER_HANDLE}`}
-          </a>
+          >{`built with @${TWITTER_HANDLE}`}</a>
         </div>
       </div>
     </div>
